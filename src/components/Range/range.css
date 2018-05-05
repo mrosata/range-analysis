@@ -1,0 +1,37 @@
+table.Range {
+    padding: 0;
+    user-select: none;
+    font-size: 0.9rem;
+    border-collapse: collapse;
+}
+table.Range tr {
+    padding: 0;
+}
+table.Range tr td {
+    padding: 0.5rem 0.33rem;
+    border: 1px solid #222222;
+    cursor: pointer;
+}
+table.Range tr td.suited {
+    background: #83c1ef;
+}
+table.Range tr td.pair {
+    background: #ff8279;
+}
+table.Range tr td.offsuit {
+    background: #ffd396;
+}
+
+table.Range tr td.off.suited {
+    background: #316781;
+}
+table.Range tr td.off.pair {
+    background: #683333;
+}
+table.Range tr td.off.offsuit {
+    background: #6a553e;
+}
+table.Range tr td.disabled {
+    background: #253136;
+    cursor: not-allowed;
+}
