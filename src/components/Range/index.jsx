@@ -25,7 +25,7 @@ export default class Range extends Component {
 
   constructor(props) {
     super(props)
-    this.state = { ...props, mouseIsDown: false }
+    this.state = { ...props, mouseIsDown: false, modifiers: [0b1111, 0b1111] }
     if (!this.state.range)
       this.state.range = new RangeClass(props);
     this.state.rangeArray = this.state.range.toArray();
@@ -39,16 +39,20 @@ export default class Range extends Component {
   }
 
   toggleCombo = (i, j, {value}) => evt => {
-    const isMouseOverEvt = evt.type === 'mouseover'
-    const isClickEvt = evt.type === 'click'
-    if (!isClickEvt && !evt.ctrlKey && !evt.shiftKey) {
-      return
+    const { type, ctrlKey, shiftKey, altKey } = evt
+    const {range, modifiers} = this.state
+
+    const isMouseOverEvt = type === 'mouseover'
+    const isClickEvt = type === 'click'
+
+    if (!isClickEvt && !ctrlKey && !shiftKey) {
+      return evt;
     }
-    const range = this.state.range
+
     const isOn = value === 1
-    if ((!isOn && isClickEvt) || (isMouseOverEvt && evt.ctrlKey))
+    if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey))
       range.add(i,j)
-    else if ((isOn && isClickEvt) || (isMouseOverEvt && evt.shiftKey))
+    else if ((isOn && isClickEvt) || (isMouseOverEvt && shiftKey))
       range.remove(i, j)
 
     this.updateRange(range)
@@ -105,6 +109,11 @@ export default class Range extends Component {
         </div>
       </div>
 
+      <div className='row controls'>
+        <div className="col form">
+          <input type="text"/>
+        </div>
+      </div>
       <section className='row m-3'>
         <div className="col">
           <table className={`table Range ${currentRange.level}`}>
