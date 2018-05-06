@@ -49,7 +49,7 @@ function toFixed(n, num) {
 function toPercent(rangeComboCount, entireRangeArray, excludeKey) {
   const selected = toComboCount(rangeComboCount, 'on', false)
   const total = toComboCount(entireRangeArray, '', true, excludeKey);
-  return toFixed(2, selected / total);
+  return toFixed(3, (selected / total)*100);
 }
 
 function toComboCount(rangeArray, state = 'on', includeAll = false, excludeState = '') {
