@@ -64,17 +64,16 @@ export default class Range extends Component {
 
     const isMouseOverEvt = type === 'mouseover'
     const isClickEvt = type === 'click'
-    const modifiersOn = Array.isArray(modifiers) && modifiers.length > 0
     if (!isClickEvt && !ctrlKey && !shiftKey) {
       return evt;
     }
 
     const isOn = value === 1
     if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey)) {
-      !modifiersOn ? range.add(i,j) : range.add(i,j, modifiers)
+      range.add(i,j, modifiers)
     }
     else if ((isOn && isClickEvt) || (isMouseOverEvt && shiftKey))
-      !modifiersOn ? range.remove(i, j) : range.remove(i,j, modifiers)
+      range.remove(i,j, modifiers)
 
     this.updateRange(range)
   }
