@@ -1,5 +1,6 @@
 import uniq from 'ramda/src/uniq'
-import {REMAINING_SUITS, CARDS, SUITS, SUITED_COMBOS, coordToCombos} from './combo-utils'
+import { CARDS, coordToCombos, REMAINING_SUITS, SUITED_FILTERS, SUITS } from './combo-utils'
+
 const GENERIC_COMBO_RE = /([2-9TJQKA])([2-9TJQKA])[so]?/i
 const CARD_SUIT_SHORTHAND_RE = /([2-9ATJKQ][shdc])/i
 
@@ -47,16 +48,16 @@ function toFixed(n, num) {
 }
 
 function toPercent(rangeComboCount, entireRangeArray, excludeKey) {
-  const selected = toComboCount(rangeComboCount, 'on', false)
+  const selected = toComboCount(rangeComboCount, 'on', false, undefined, 'filtered')
   const total = toComboCount(entireRangeArray, '', true, excludeKey);
   return toFixed(3, (selected / total)*100);
 }
 
-function toComboCount(rangeArray, state = 'on', includeAll = false, excludeState = '') {
+function toComboCount(rangeArray, state = 'on', includeAll = false, excludeState = '', comboKey = 'combos') {
   return rangeArray.reduce((rowTotals, row) => {
     return rowTotals + row.reduce((handTotals, comboObj) => {
       const s = comboObj.state;
-      return handTotals + +(s !== excludeState && (comboObj.state === state || includeAll) ? comboObj.combos : 0);
+      return handTotals + +(s !== excludeState && (comboObj.state === state || includeAll) ? comboObj[comboKey] : 0);
     }, 0)
   }, 0)
 }
@@ -118,12 +119,16 @@ export default class Range {
     this.deck = parent && parent.deck ? parent.deck : Range.freshDeck()
 
     function intToObj(combo, i, j, deck) {
+      const filters = [];
+      const combos = coordToCombos(i, j, deck, filters);
       return {
+        filters: [],
         value: +combo,
         state: +combo === 1 ? 'on' : setDisabled ? 'disabled' : 'off',
         type: coordToType(i,j),
         text: coordToStr(i,j),
-        combos: coordToCombos(i, j, deck)
+        combos: combos.total,
+        filtered: combos.filtered,
       }
     }
 
@@ -142,6 +147,7 @@ export default class Range {
     this.parent = parent || null
     this.label = label ? label : guessLabelFromTree(parent)
     this.totalCombos = this.toComboCount()
+    this.totalFilteredCombos = this.toComboCount(true)
   }
 
   rootRange() {
@@ -151,8 +157,8 @@ export default class Range {
     return this;
   }
 
-  toComboCount() {
-    return toComboCount(this.toArray(), 'on')
+  toComboCount(useFiltered = false) {
+    return toComboCount(this.toArray(), 'on', false, '', useFiltered ? 'filtered' : 'combos')
   }
 
   percentageOf(exclusionKey) {
@@ -186,12 +192,39 @@ export default class Range {
     return this.current[i][j]
   }
 
-  add(i,j) {
+  filtersAt(i, j, filtersToAdd = []) {
+    let parentFilters = []
+    if (this.parent) {
+      parentFilters = this.parent.filtersAt(i, j);
+    }
+    return uniq((this.toArray()[i][j].filters || []).concat(parentFilters).concat(filtersToAdd))
+  }
+
+  toggleFilters(i,j,insert = true, filters = []) {
+    const combo = this.comboAt(i,j)
+    const oldFilters = combo.filters
+    for (let i = 0; i < filters.length; i++) {
+      const f1 = filters[i]
+      if (!Array.isArray(f1)) { continue }
+      const idx = oldFilters.indexOf(f =>
+        f[0] === f1[0] && f[1] === f1[1])
+      if (insert && idx === -1) {
+        oldFilters.push(f1)
+      } else if (!insert && idx !== -1) {
+        oldFilters.splice(idx, 1)
+      }
+    }
+  }
+
+  add(i,j, filters = []) {
     const combo = this.comboAt(i,j);
     if (combo.state === 'disabled') { return this }
     combo.value = Math.max(this.base[i][j].value, 1);
     combo.state = combo.value === 1 ? 'on' : 'off';
+    combo.filters = this.filtersAt(i, j, filters)
+    this.updateComboAt(i, j)
     this.totalCombos = this.toComboCount()
+    this.totalFilteredCombos = this.toComboCount(true)
     return this;
   }
 
@@ -200,10 +233,14 @@ export default class Range {
     if (combo.state === 'disabled') { return this }
     combo.value = 0;
     combo.state = combo.value === 1 ? 'on' : 'off';
+    combo.filters = this.parent ? this.parent.filtersAt(i, j) : [];
+    this.updateComboAt(i, j)
     if (this.children.length) {
       this.children.map(Range.enforceOrder)
     }
     this.totalCombos = this.toComboCount()
+    this.totalFilteredCombos = this.toComboCount(true)
+
     return this;
   }
 
@@ -220,6 +257,8 @@ export default class Range {
       }
     }
     this.totalCombos = this.toComboCount()
+    this.totalFilteredCombos = this.toComboCount(true)
+
     return this;
   }
 
@@ -273,12 +312,21 @@ export default class Range {
     return JSON.stringify(this.toArray());
   }
 
+  updateComboAt(i,j) {
+    const combo = this.comboAt(i,j);
+    const combos = coordToCombos(i, j, this.deck, this.filtersAt(i,j));
+    combo.combos = combos.total;
+    combo.filtered = combos.filtered;
+  }
+
   updateCombos() {
     const deck = this.deck
     for (let i = 0; i < this.current.length; i++) {
       const row = this.current[i];
       for (let j = 0; j < row.length; j++) {
-        row[j].combos = coordToCombos(i, j, deck)
+        const combos = coordToCombos(i, j, deck, this.filtersAt(i, j))
+        row[j].combos = combos.total
+        row[j].filtered = combos.filtered
       }
     }
   }

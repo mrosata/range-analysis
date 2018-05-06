@@ -4,6 +4,7 @@ import RangeClass from './range.class'
 import './range.css'
 import CardDeck from '../CardDeck'
 import * as R from 'ramda'
+import {ALL_FILTERS, CARD_SUITS} from './combo-utils'
 
 const {map} = R
 
@@ -16,16 +17,35 @@ const Combo = (handleComboSelect, rowIdx) => (combo, colIdx) => (
       tabIndex='0'
   >
     { combo.text }
+    <small>{combo.combos}/{combo.filtered}</small>
   </td>
 )
 
 const RowOfCombos = onClick => (row, i) => (<tr key={`row${i}`}>{ row.map(Combo(onClick, i)) }</tr>)
 
+function suitIcon(suit) {
+  switch (suit) {
+    case CARD_SUITS.h:
+      return <span data-suit='h' className='suit-red'>{` ♥️ `}</span>;
+    case CARD_SUITS.s:
+      return <span data-suit='s' className='suit-black'>{` ♠ ️`}</span>;
+    case CARD_SUITS.c:
+      return <span data-suit='c' className='suit-black'>{` ♣️️ `}</span>;
+    case CARD_SUITS.d:
+      return <span data-suit='d' className='suit-red'>{` ♦️ `}</span>;
+  }
+  return <span>X</span>
+}
+
 export default class Range extends Component {
+
+  static propTypes = {
+    range: PropTypes.object,
+  }
 
   constructor(props) {
     super(props)
-    this.state = { ...props, mouseIsDown: false, modifiers: [0b1111, 0b1111] }
+    this.state = { ...props, mouseIsDown: false, modifiers: [], modifiersState: {} }
     if (!this.state.range)
       this.state.range = new RangeClass(props);
     this.state.rangeArray = this.state.range.toArray();
@@ -39,23 +59,51 @@ export default class Range extends Component {
   }
 
   toggleCombo = (i, j, {value}) => evt => {
-    const { type, ctrlKey, shiftKey, altKey } = evt
-    const {range, modifiers} = this.state
+    const { type, ctrlKey, shiftKey } = evt
+    const {range, modifiers } = this.state
 
     const isMouseOverEvt = type === 'mouseover'
     const isClickEvt = type === 'click'
-
+    const modifiersOn = Array.isArray(modifiers) && modifiers.length > 0
     if (!isClickEvt && !ctrlKey && !shiftKey) {
       return evt;
     }
 
     const isOn = value === 1
-    if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey))
-      range.add(i,j)
+    if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey)) {
+      !modifiersOn ? range.add(i,j) : range.add(i,j, modifiers)
+    }
     else if ((isOn && isClickEvt) || (isMouseOverEvt && shiftKey))
-      range.remove(i, j)
+      !modifiersOn ? range.remove(i, j) : range.remove(i,j, modifiers)
 
     this.updateRange(range)
+  }
+
+  toggleModifier = (suitI, suitJ) => {
+    const modifiersState = {}
+    const modifiers = this.state.modifiers.slice(0);
+    const idx = modifiers.findIndex(f => {
+      return suitI === f[0] && suitJ === f[1]
+    })
+    if (idx === -1) {
+      modifiers.push([suitI, suitJ])
+    }
+    else {
+      modifiers.splice(idx, 1)
+    }
+
+    for (let i = 0; i < modifiers.length; i++) {
+      const f1 = modifiers[i]
+      if (!Array.isArray(f1)) { continue }
+      const key = `${f1[0]}${f1[1]}`
+      modifiersState[key] = 'active'
+    }
+
+    this.setState({
+      ...this.state,
+      modifiers,
+      modifiersState,
+    })
   }
 
   getNextRange = () => {
@@ -105,15 +153,31 @@ export default class Range extends Component {
           <h2>Percent of All: { currentRange.percentageOf() }</h2>
         </div>
         <div className="col-4">
-          <h2>Combos: { currentRange.totalCombos }</h2>
+          <div className="row">
+            <h2>Filtered Combos: { currentRange.totalFilteredCombos }</h2>
+          </div>
+          <div className="row">
+            <h2>Combos: { currentRange.totalCombos }</h2>
+          </div>
         </div>
       </div>
 
       <div className='row controls'>
-        <div className="col form">
-          <input type="text"/>
+        <div className="col-lg-3 col-md-4 col-sm-4">
+          <div className="row">
+            { ALL_FILTERS.map(([filterI, filterJ]) => {
+              return <div
+                className={`col-3 modifier ${ this.state.modifiersState[`${filterI}${filterJ}`]}`}
+                key={ `suit-filter-${filterI}-${filterJ}` }
+                onClick={ () => this.toggleModifier(filterI, filterJ) }
+              >
+                { suitIcon(filterI) }{ suitIcon(filterJ) }
+              </div>
+            })}
+          </div>
         </div>
       </div>
+
       <section className='row m-3'>
         <div className="col">
           <table className={`table Range ${currentRange.level}`}>

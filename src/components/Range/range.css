@@ -1,3 +1,15 @@
+.modifier.active {
+    background: #b68b5f;
+}
+.modifier:hover {
+    background: #99c2ff;
+ }
+.suit-red {
+    color: #c20000;
+}
+.suit-black {
+     color: #1c272b;
+ }
 table.Range {
     padding: 0;
     user-select: none;
@@ -8,9 +20,15 @@ table.Range tr {
     padding: 0;
 }
 table.Range tr td {
+    position: relative;
     padding: 0.5rem 0.33rem;
     border: 1px solid #222222;
     cursor: pointer;
+}
+table.Range tr small {
+    position: absolute;
+    bottom: 1px;
+    right: 2px;
 }
 table.Range tr td.suited {
     background: #83c1ef;
