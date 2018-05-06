@@ -193,7 +193,6 @@ export default class Range {
   }
 
   filtersAt(i, j, explicitFilters) {
-    console.log('top -> ', i, j, filters)
     const combo = this.comboAt(i, j);
     const filters = Array.isArray(explicitFilters) ?
       explicitFilters : combo.filters
@@ -207,7 +206,6 @@ export default class Range {
       return uniq(filters);
 
     const modifiedFilters = filters.filter(([pfI, pfJ]) => {
-      setTimeout(() => console.log([pfI, pfJ]),10);
 
       return parentFilters.some(
         ([fI, fJ]) => fI === pfI && fJ === pfJ
@@ -238,7 +236,6 @@ export default class Range {
     combo.value = Math.max(this.base[i][j].value, 1);
     combo.state = combo.value === 1 ? 'on' : 'off';
     combo.filters = this.filtersAt(i, j, filters)
-    console.log('fitl', combo.filters)
     this.updateComboAt(i, j)
     this.totalCombos = this.toComboCount()
     this.totalFilteredCombos = this.toComboCount(true)
