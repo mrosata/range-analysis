@@ -1,3 +1,6 @@
+.modifier {
+    cursor: pointer;
+}
 .modifier.active {
     background: #b68b5f;
 }

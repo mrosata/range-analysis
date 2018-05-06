@@ -28,7 +28,7 @@ function suitIcon(suit) {
     case CARD_SUITS.h:
       return <span data-suit='h' className='suit-red'>{` ♥️ `}</span>;
     case CARD_SUITS.s:
-      return <span data-suit='s' className='suit-black'>{` ♠ ️`}</span>;
+      return <span data-suit='s' className='suit-black'>{` ♠ `}</span>;
     case CARD_SUITS.c:
       return <span data-suit='c' className='suit-black'>{` ♣️️ `}</span>;
     case CARD_SUITS.d:
@@ -61,7 +61,7 @@ export default class Range extends Component {
   toggleCombo = (i, j, {value}) => evt => {
     const { type, ctrlKey, shiftKey } = evt
     const {range, modifiers } = this.state
-
+    const filters = modifiers.length ? modifiers : undefined;
     const isMouseOverEvt = type === 'mouseover'
     const isClickEvt = type === 'click'
     if (!isClickEvt && !ctrlKey && !shiftKey) {
@@ -70,10 +70,10 @@ export default class Range extends Component {
 
     const isOn = value === 1
     if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey)) {
-      range.add(i,j, modifiers)
+      range.add(i,j, filters)
     }
     else if ((isOn && isClickEvt) || (isMouseOverEvt && shiftKey))
-      range.remove(i,j, modifiers)
+      range.remove(i,j)
 
     this.updateRange(range)
   }

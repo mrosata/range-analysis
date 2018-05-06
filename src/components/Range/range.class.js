@@ -192,12 +192,28 @@ export default class Range {
     return this.current[i][j]
   }
 
-  filtersAt(i, j, filtersToAdd = []) {
-    let parentFilters = []
+  filtersAt(i, j, explicitFilters) {
+    console.log('top -> ', i, j, filters)
+    const combo = this.comboAt(i, j);
+    const filters = Array.isArray(explicitFilters) ?
+      explicitFilters : combo.filters
+    let parentFilters = [];
     if (this.parent) {
       parentFilters = this.parent.filtersAt(i, j);
     }
-    return uniq((this.toArray()[i][j].filters || []).concat(parentFilters).concat(filtersToAdd))
+    if (!Array.isArray(filters) || filters.length === 0)
+      return parentFilters;
+    if (parentFilters.length === 0)
+      return uniq(filters);
+
+    const modifiedFilters = filters.filter(([pfI, pfJ]) => {
+      setTimeout(() => console.log([pfI, pfJ]),10);
+
+      return parentFilters.some(
+        ([fI, fJ]) => fI === pfI && fJ === pfJ
+      )
+    })
+    return modifiedFilters.length === 0 ? parentFilters : modifiedFilters;
   }
 
   toggleFilters(i,j,insert = true, filters = []) {
@@ -216,12 +232,13 @@ export default class Range {
     }
   }
 
-  add(i,j, filters = []) {
+  add(i,j, filters) {
     const combo = this.comboAt(i,j);
     if (combo.state === 'disabled') { return this }
     combo.value = Math.max(this.base[i][j].value, 1);
     combo.state = combo.value === 1 ? 'on' : 'off';
     combo.filters = this.filtersAt(i, j, filters)
+    console.log('fitl', combo.filters)
     this.updateComboAt(i, j)
     this.totalCombos = this.toComboCount()
     this.totalFilteredCombos = this.toComboCount(true)
@@ -233,7 +250,7 @@ export default class Range {
     if (combo.state === 'disabled') { return this }
     combo.value = 0;
     combo.state = combo.value === 1 ? 'on' : 'off';
-    combo.filters = this.parent ? this.parent.filtersAt(i, j) : [];
+    combo.filters = this.filtersAt(i, j, []);
     this.updateComboAt(i, j)
     if (this.children.length) {
       this.children.map(Range.enforceOrder)
@@ -314,7 +331,7 @@ export default class Range {
 
   updateComboAt(i,j) {
     const combo = this.comboAt(i,j);
-    const combos = coordToCombos(i, j, this.deck, this.filtersAt(i,j));
+    const combos = coordToCombos(i, j, this.deck, this.filtersAt(i, j));
     combo.combos = combos.total;
     combo.filtered = combos.filtered;
   }
