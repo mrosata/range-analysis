@@ -47,13 +47,29 @@ function toFixed(n, num) {
   return Math.floor(num * Math.pow(10, n)) / Math.pow(10, n)
 }
 
-function toPercent(rangeComboCount, entireRangeArray, excludeKey) {
-  const selected = toComboCount(rangeComboCount, 'on', false, undefined, 'filtered')
-  const total = toComboCount(entireRangeArray, '', true, excludeKey);
-  return toFixed(3, (selected / total)*100);
+/**
+ * Get a count of filtered combos (so they are off but some are on)
+ * This counts only the ones that aren't active
+ * @param rangeArray
+ * @return {*}
+ */
+function filteredComboCount(rangeArray) {
+  return rangeArray.reduce((rowTotals, row) => {
+    return rowTotals + row.reduce((handTotals, comboObj) => {
+      const s = comboObj.state;
+      return handTotals + +(s === 'on' && comboObj.combos !== comboObj.filtered ? comboObj.combos - comboObj.filtered : 0);
+    }, 0)
+  }, 0)
 }
 
-function toComboCount(rangeArray, state = 'on', includeAll = false, excludeState = '', comboKey = 'combos') {
+function toPercent(rangeArray, entireRangeArray, excludeKey) {
+  const selected = toComboCount(rangeArray, 'on', false, undefined, 'filtered')
+  // const filteredFromSelected = filteredComboCount(rangeArray)
+  const total = toComboCount(entireRangeArray, '', true, excludeKey, 'filtered');
+  return toFixed(3, (selected / (total))*100);
+}
+
+function toComboCount(rangeArray, state = 'on', includeAll = false, excludeState = '', comboKey = 'filtered') {
   return rangeArray.reduce((rowTotals, row) => {
     return rowTotals + row.reduce((handTotals, comboObj) => {
       const s = comboObj.state;
@@ -237,7 +253,7 @@ export default class Range {
     combo.state = combo.value === 1 ? 'on' : 'off';
     combo.filters = this.filtersAt(i, j, filters)
     this.updateComboAt(i, j)
-    this.totalCombos = this.toComboCount()
+    this.totalCombos = this.toComboCount(true)
     this.totalFilteredCombos = this.toComboCount(true)
     return this;
   }
@@ -297,7 +313,7 @@ export default class Range {
     }
 
     if(Array.isArray(dead)) {
-      const dc = uniq(dead.concat(this.deadCards, this.parentsDeadCards).map(vs => `${vs}`.replace(/^([2-9AKQJT])/i, (i, l) => {
+      const dc = uniq([].concat(this.parentsDeadCards, this.deadCards, dead).map(vs => `${vs}`.replace(/^([2-9AKQJT])/i, (i, l) => {
         return l.toUpperCase()
       })))
       this.deadCards = dc
@@ -343,5 +359,8 @@ export default class Range {
         row[j].filtered = combos.filtered
       }
     }
+
+    this.totalCombos = this.toComboCount()
+    this.totalFilteredCombos = this.toComboCount(true)
   }
 }

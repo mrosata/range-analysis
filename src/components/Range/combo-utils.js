@@ -109,12 +109,11 @@ export function combosMatchingFilters(cardI, cardJ, filters, comboType) {
     return 0;
   }
   const isSuited = comboType === SUITED;
-  const isOffSuited = comboType === OFFSUIT;
   const isPair = comboType === PAIR;
 
   const mirrorComboMap = {}
 
-  let filterable = filters.reduce((total, [filterI, filterJ]) => {
+  return filters.reduce((total, [filterI, filterJ]) => {
     const sameSuitFilter = filterI === filterJ
     if ((isSuited && !sameSuitFilter) || (!isSuited && sameSuitFilter)) {
       return total;
@@ -122,7 +121,7 @@ export function combosMatchingFilters(cardI, cardJ, filters, comboType) {
     // Pairs use same 2 cards, so need to make sure not to use mirrored filters
     if (isPair) {
       if (mirrorComboMap[`FILTER-${filterI}${filterJ}`]) {
-        return 0;
+        return total + 0;
       }
       mirrorComboMap[`FILTER-${filterJ}${filterI}`] = true
     }
@@ -130,8 +129,6 @@ export function combosMatchingFilters(cardI, cardJ, filters, comboType) {
     const cardAvailableJ = (filterJ & cardJ) > 0;
     return total + (cardAvailableI && cardAvailableJ ? 1 : 0)
   }, 0);
-
-  return filterable
 }
 
 /**

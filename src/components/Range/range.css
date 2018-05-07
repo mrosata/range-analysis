@@ -30,7 +30,9 @@ table.Range tr td {
 }
 table.Range tr small {
     position: absolute;
-    bottom: 1px;
+    bottom: 0;
+    font-size: 0.65rem;
+    padding: 0.05rem 0 0;
     right: 2px;
 }
 table.Range tr td.suited {

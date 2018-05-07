@@ -17,7 +17,7 @@ const Combo = (handleComboSelect, rowIdx) => (combo, colIdx) => (
       tabIndex='0'
   >
     { combo.text }
-    <small>{combo.combos}/{combo.filtered}</small>
+    <small>{combo.filtered}</small>
   </td>
 )
 
@@ -59,21 +59,23 @@ export default class Range extends Component {
   }
 
   toggleCombo = (i, j, {value}) => evt => {
-    const { type, ctrlKey, shiftKey } = evt
+    const { type, ctrlKey, shiftKey, altKey } = evt
     const {range, modifiers } = this.state
     const filters = modifiers.length ? modifiers : undefined;
     const isMouseOverEvt = type === 'mouseover'
     const isClickEvt = type === 'click'
-    if (!isClickEvt && !ctrlKey && !shiftKey) {
+    if (!isClickEvt && !ctrlKey && !shiftKey && !altKey) {
       return evt;
     }
 
     const isOn = value === 1
-    if ((!isOn && isClickEvt) || (isMouseOverEvt && ctrlKey)) {
+    if (!isOn && (isClickEvt || (isMouseOverEvt && ctrlKey))) {
       range.add(i,j, filters)
     }
-    else if ((isOn && isClickEvt) || (isMouseOverEvt && shiftKey))
+    else if (isOn && (isClickEvt || (isMouseOverEvt && shiftKey)))
       range.remove(i,j)
+    else if (altKey)
+      isOn ? range.add(i,j, filters) : range.remove(i,j, filters); // Added this b/c it helps with filtering already on combos
 
     this.updateRange(range)
   }
@@ -133,10 +135,10 @@ export default class Range extends Component {
   updateDeadCards = (evt) => {
     const value = evt.target.value || ''
     if (value && `${value.length}` % 2 === 0 && value !== this.state.range.deadCards.join('')) {
-      this.state.range.setDeadCards(value);
+      const range = this.state.range.setDeadCards(value);
       this.state.deadCards = this.state.range.deadCards.join('')
       evt.target.value = ''
-      this.setState(this.state);
+      this.forceUpdate();
     }
   }
 
@@ -144,46 +146,46 @@ export default class Range extends Component {
     const currentRange = this.state.range
 
     return <main className='container'>
-      <div className='row'>
-        <div className="col-4">
-          <h2>Percent of Range: { currentRange.percentageOf('disabled') }</h2>
-        </div>
-        <div className="col-4">
-          <h2>Percent of All: { currentRange.percentageOf() }</h2>
-        </div>
-        <div className="col-4">
-          <div className="row">
-            <h2>Filtered Combos: { currentRange.totalFilteredCombos }</h2>
-          </div>
-          <div className="row">
-            <h2>Combos: { currentRange.totalCombos }</h2>
-          </div>
-        </div>
-      </div>
-
-      <div className='row controls'>
-        <div className="col-lg-3 col-md-4 col-sm-4">
-          <div className="row">
-            { ALL_FILTERS.map(([filterI, filterJ]) => {
-              return <div
-                className={`col-3 modifier ${ this.state.modifiersState[`${filterI}${filterJ}`]}`}
-                key={ `suit-filter-${filterI}-${filterJ}` }
-                onClick={ () => this.toggleModifier(filterI, filterJ) }
-              >
-                { suitIcon(filterI) }{ suitIcon(filterJ) }
-              </div>
-            })}
-          </div>
-        </div>
-      </div>
 
       <section className='row m-3'>
-        <div className="col">
+        <div className="col-md-9">
           <table className={`table Range ${currentRange.level}`}>
             <tbody>
             { this.state.rangeArray.map(RowOfCombos(this.toggleCombo)) }
             </tbody>
           </table>
+        </div>
+        <div className="col-md-3">
+
+          <div className='row controls mb-3 ml-2'>
+            <div className="col-xs-5">
+              <div className="row">
+                { ALL_FILTERS.map(([filterI, filterJ]) => {
+                  return <div
+                    className={`col-3 modifier ${ this.state.modifiersState[`${filterI}${filterJ}`]}`}
+                    key={ `suit-filter-${filterI}-${filterJ}` }
+                    onClick={ () => this.toggleModifier(filterI, filterJ) }
+                  >
+                    { suitIcon(filterI) }{ suitIcon(filterJ) }
+                  </div>
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className='row stats ml-2'>
+            <div className="col-xs-4">
+              <div className="row mb-2">
+                <h5>Percent of Range: { currentRange.percentageOf('disabled') }</h5>
+              </div>
+              <div className="row mb-2">
+                <h5>Percent of All: { currentRange.percentageOf() }</h5>
+              </div>
+              <div className="row mb-2">
+                <h5>Combos: { currentRange.totalCombos }</h5>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
