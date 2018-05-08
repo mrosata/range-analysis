@@ -1,9 +1,10 @@
 import React, {Component} from 'react'
 import PropTypes from 'prop-types'
+import * as R from 'ramda'
+import classNames from 'classnames'
 import RangeClass from './range.class'
 import './range.css'
 import CardDeck from '../CardDeck'
-import * as R from 'ramda'
 import {ALL_FILTERS, CARD_SUITS} from './combo-utils'
 
 const {map} = R
@@ -181,54 +182,78 @@ export default class Range extends Component {
               <div className="row mb-2">
                 <h5>Percent of All: { currentRange.percentageOf() }</h5>
               </div>
-              <div className="row mb-2">
+              <div className='row mb-2'>
                 <h5>Combos: { currentRange.totalCombos }</h5>
               </div>
             </div>
           </div>
+
+
+          <hr/>
+          <div className='row'>
+            <div className='col mt-3'>
+              <h2 className={classNames({
+                'display-5': currentRange.label.length <= 15,
+                'display-6': currentRange.label.length > 15 && currentRange.label.length <= 25,
+                'lead': currentRange.label.length > 25,
+              })}>{ currentRange.label }</h2>
+            </div>
+          </div>
+
+
+          <hr/>
+          <div className='row mt-3'>
+
+            <div className='col mb-2'>
+              <button className={'next-range btn btn-info'}
+                      onClick={this.getPrevRange}
+              >
+                Get Prev
+              </button>
+            </div>
+
+            <div className='col mb-2'>
+              <button className={'next-range btn btn-info'}
+                      onClick={this.getNextRange}
+              >
+                Get Next
+              </button>
+            </div>
+
+            <div className='col mb-2'>
+              <button
+                className='btn btn-danger'
+                onClick={ () => this.setAllOnCurrentRange(this.state.toggleOffOn) }
+              >
+                TOGGLE ALL { this.state.toggleOffOn === 1 ? 'ON' : 'OFF' }
+              </button>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      <div className="row">
+      <div className='row'>
 
-        <div className="col">
-          <button className={'next-range btn btn-info'}
-                  onClick={this.getPrevRange}
-          >
-            Get Prev
-          </button>
-        </div>
-
-        <div className="col">
-          <button className={'next-range btn btn-info'}
-                  onClick={this.getNextRange}
-          >
-            Get Next
-          </button>
-        </div>
-
-        <div className="col">
-          <button
-            className='btn btn-danger'
-            onClick={ () => this.setAllOnCurrentRange(this.state.toggleOffOn) }
-          >
-            TOGGLE ALL { this.state.toggleOffOn === 1 ? 'ON' : 'OFF' }
-          </button>
+        <div className='col-sm-8 col-md-7'>
+          <div className='dead-cards'>
+            { currentRange.deadCards.map(card => <CardDeck key={card} card={card}/>) }
+          </div>
         </div>
       </div>
-      <input type={'text'}
-             value={currentRange.label}
-             name={'range-label'}
-             placeholder={'Enter name for range'}
-             onChange={this.updateRangeLabel}
-      />
 
-      <h2 className='lead'>{ currentRange.label }</h2>
-
-
-      <div className="row">
-
-        <div className="col">
+      <div className='row'>
+        <div className='col-sm-6 col-md-4'>
+          <input
+            type={'text'}
+            className='form-control'
+            value={currentRange.label}
+            name={'range-label'}
+            placeholder={'Enter name for range'}
+            onChange={this.updateRangeLabel}
+          />
+        </div>
+        <div className='col-sm-6 col-md-4'>
           <input
             className='form-control'
             type={'text'}
@@ -237,13 +262,6 @@ export default class Range extends Component {
             onChange={this.updateDeadCards}
           />
         </div>
-
-        <div className="col-12">
-          <div className='dead-cards'>
-            { currentRange.deadCards.map(card => <CardDeck key={card} card={card}/>) }
-          </div>
-        </div>
-
       </div>
 
     </main>

@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "bootstrap": "4.0.0",
+    "classnames": "^2.2.5",
     "font-awesome": "4.7.0",
     "mdbreact": "^4.3.0",
     "prop-types": "^15.6.1",

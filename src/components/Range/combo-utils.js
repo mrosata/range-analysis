@@ -83,7 +83,7 @@ const onesCount = memoize(function(bxn) {
     .toString(2)
     .replace(/[^1]/g, '')
     .length
-  );
+  , 10);
 })
 Reflect.ownKeys(REMAINING_SUITS)
   .forEach(key => {
